@@ -20,7 +20,9 @@ function App() {
       </div>
       <h1>WXT + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)} className="text-3xl font-bold underline">
+        <button onClick={() => setCount((count) => count + 1)} 
+                className="font-medium text-sky-500"
+                >
           count is {count}
         </button>
         <p>
