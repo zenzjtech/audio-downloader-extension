@@ -10,5 +10,8 @@ export default defineConfig({
   srcDir: 'src',  
   runner: {
     disabled: true,
-  }
+  },
+  imports: {
+    dirs: ['components', 'composables'] // Only include these directories
+  }  
 });
