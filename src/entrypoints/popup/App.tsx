@@ -250,11 +250,7 @@ function App() {
     files.filter(file => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
-      return (
-        file.filename.toLowerCase().includes(query) ||
-        file.url.toLowerCase().includes(query) ||
-        file.tabTitle?.toLowerCase().includes(query)
-      );
+      return file.filename.toLowerCase().includes(query);
     })
   );
 
@@ -297,7 +293,7 @@ function App() {
           <TextField
             fullWidth
             size="small"
-            placeholder="Search by filename, URL, or page title..."
+            placeholder="Search by filename..."
             value={searchQuery}
             onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           />
