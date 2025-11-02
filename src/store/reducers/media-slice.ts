@@ -12,11 +12,16 @@ export interface MediaFile {
   source: 'webRequest' | 'dom';
 }
 
+export type SortBy = 'name' | 'date' | 'size';
+export type SortOrder = 'asc' | 'desc';
+
 interface MediaState {
   files: MediaFile[];
   selectedFiles: string[];
   isCapturing: boolean;
   searchQuery: string;
+  sortBy: SortBy;
+  sortOrder: SortOrder;
 }
 
 const initialState: MediaState = {
@@ -24,6 +29,8 @@ const initialState: MediaState = {
   selectedFiles: [],
   isCapturing: true,
   searchQuery: '',
+  sortBy: 'date',
+  sortOrder: 'desc',
 };
 
 const mediaSlice = createSlice({
@@ -74,6 +81,15 @@ const mediaSlice = createSlice({
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
+    setSortBy: (state, action: PayloadAction<SortBy>) => {
+      state.sortBy = action.payload;
+    },
+    setSortOrder: (state, action: PayloadAction<SortOrder>) => {
+      state.sortOrder = action.payload;
+    },
+    toggleSortOrder: (state) => {
+      state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
+    },
   },
 });
 
@@ -87,6 +103,9 @@ export const {
   deselectAllFiles,
   setCapturing,
   setSearchQuery,
+  setSortBy,
+  setSortOrder,
+  toggleSortOrder,
 } = mediaSlice.actions;
 
 export default mediaSlice.reducer;

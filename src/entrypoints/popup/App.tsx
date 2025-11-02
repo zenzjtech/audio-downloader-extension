@@ -17,6 +17,9 @@ import {
   Alert,
   CircularProgress,
   Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Download,
@@ -27,6 +30,10 @@ import {
   MusicNote,
   PlayArrow,
   Pause,
+  Sort,
+  ArrowUpward,
+  ArrowDownward,
+  Check,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store/hook';
 import {
@@ -37,7 +44,10 @@ import {
   selectAllFiles,
   deselectAllFiles,
   setSearchQuery,
+  setSortBy,
+  toggleSortOrder,
   type MediaFile,
+  type SortBy,
 } from '@/store/reducers/media-slice';
 import {
   downloadFilesAsZip,
@@ -48,13 +58,14 @@ import {
 
 function App() {
   const dispatch = useAppDispatch();
-  const { files, selectedFiles, searchQuery } = useAppSelector((state) => state.media);
+  const { files, selectedFiles, searchQuery, sortBy, sortOrder } = useAppSelector((state) => state.media);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [playingFileId, setPlayingFileId] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
 
   // Load captured media on mount
   useEffect(() => {
@@ -209,16 +220,59 @@ function App() {
     };
   }, [audioElement]);
 
-  // Filter files based on search query
-  const filteredFiles = files.filter(file => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      file.filename.toLowerCase().includes(query) ||
-      file.url.toLowerCase().includes(query) ||
-      file.tabTitle?.toLowerCase().includes(query)
-    );
-  });
+  // Sort files
+  const sortFiles = (filesToSort: MediaFile[]): MediaFile[] => {
+    const sorted = [...filesToSort];
+    
+    sorted.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.filename.localeCompare(b.filename);
+          break;
+        case 'date':
+          comparison = a.timestamp - b.timestamp;
+          break;
+        case 'size':
+          comparison = (a.fileSize || 0) - (b.fileSize || 0);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  };
+
+  // Filter and sort files
+  const filteredFiles = sortFiles(
+    files.filter(file => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        file.filename.toLowerCase().includes(query) ||
+        file.url.toLowerCase().includes(query) ||
+        file.tabTitle?.toLowerCase().includes(query)
+      );
+    })
+  );
+
+  const handleSortChange = (newSortBy: SortBy) => {
+    if (sortBy === newSortBy) {
+      // Same sort field, toggle order
+      dispatch(toggleSortOrder());
+    } else {
+      // Different sort field, use ascending order
+      dispatch(setSortBy(newSortBy));
+    }
+    setSortMenuAnchor(null);
+  };
+
+  const getSortLabel = () => {
+    const labels = { name: 'Name', date: 'Date', size: 'Size' };
+    return labels[sortBy];
+  };
 
   return (
     <Box sx={{ width: 600, height: 500, display: 'flex', flexDirection: 'column' }}>
@@ -259,6 +313,14 @@ function App() {
             </Button>
             <Button
               size="small"
+              startIcon={<Sort />}
+              endIcon={sortOrder === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />}
+              onClick={(e) => setSortMenuAnchor(e.currentTarget)}
+            >
+              {getSortLabel()}
+            </Button>
+            <Button
+              size="small"
               startIcon={<Archive />}
               onClick={handleDownloadSelected}
               disabled={selectedFiles.length === 0 || downloading}
@@ -288,6 +350,32 @@ function App() {
           </Stack>
         </Stack>
       </Box>
+
+      {/* Sort Menu */}
+      <Menu
+        anchorEl={sortMenuAnchor}
+        open={Boolean(sortMenuAnchor)}
+        onClose={() => setSortMenuAnchor(null)}
+      >
+        <MenuItem onClick={() => handleSortChange('name')}>
+          <ListItemIcon>
+            {sortBy === 'name' && <Check />}
+          </ListItemIcon>
+          <ListItemText>Name</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleSortChange('date')}>
+          <ListItemIcon>
+            {sortBy === 'date' && <Check />}
+          </ListItemIcon>
+          <ListItemText>Date</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleSortChange('size')}>
+          <ListItemIcon>
+            {sortBy === 'size' && <Check />}
+          </ListItemIcon>
+          <ListItemText>Size</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Error Alert */}
       {error && (
